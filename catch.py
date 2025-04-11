@@ -6,6 +6,9 @@ import requests
 import threading 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+def add_whats_api(tel:str):
+    n = tel.replace("(", "").replace(")", "").replace("-", "").replace(" ", "")
+    return f"https://wa.me/{n}"
 
 def catch_leads(target,city,limit):
     def separate_elements(element_a):
@@ -15,7 +18,7 @@ def catch_leads(target,city,limit):
     users = {}
     def try_catch_element(xpath,page):
         try:
-            x = page.locator(xpath).text_content()
+            x = page.locator(xpath).text_content(timeout=3000)
             return x
         except:
             return "Not Found"
@@ -64,16 +67,16 @@ def catch_leads(target,city,limit):
                 end = try_catch_element(path_end,catch)
                 site = try_catch_element(path_site,catch)
                 tel = try_catch_element(path_tel,catch)
-                
-                paths = [path_name,path_end,path_site,path_tel]
-                
+                            
                 users = {
                         id_user: {
                         "name": name,
                         "site":site,
                         "telefone":tel,
+                        "link_wtzp": add_whats_api(tel),
                         "endereco": end}
                         }
+                
             return users
 
         hrefs_list = hrefs_list[:limit]
@@ -84,37 +87,6 @@ def catch_leads(target,city,limit):
             for future in as_completed(futures):
                 leads.append(future.result())         
     return leads
-        # def multiple_catcher(worker,task_id, href_list):
-        #     with ThreadPoolExecutor(max_workers=3) as inner_executor:
-        #         results = list(inner_executor.map(catch_users, hrefs_list))
-                
-        #     return results
-        # hrefs_list = hrefs_list[:limit]
-        # max_workers = 3 
+
         
-        # with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        #     futures = []
-            
-        #     chunk_size = len(hrefs_list) // max_workers +1
-        #     href_chunks = [hrefs_list[i:i + chunk_size] for i in range(0, len(hrefs_list), chunk_size)]
-            
-        #     for i, c in enumerate(href_chunks):
-        #         future = executor.submit(
-        #             multiple_catcher,
-        #             f"Worker => {i+1}",
-        #             i,
-        #             c
-        #         )
-        #         futures.append(future)
-            
-        #     for future in futures:
-        #         results = future.result()
-        #         print(f"Resultado: {results}")
-          
-
-
-
-
-
-
 leads = catch_leads("Escritório de contabilidade","Marilia",5)
